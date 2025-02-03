@@ -16,25 +16,29 @@ enum class Priority(val shortName: String) {
     }
 }
 
-class Task(var lines: MutableList<String>, var priority: Priority, var date: LocalDate, var time: LocalTime)
+data class Task(
+    var lines: MutableList<String>,
+    var priority: Priority,
+    var date: LocalDate,
+    var time: LocalTime
+)
 
 
 fun stringToDate(date: String): LocalDate? {
-    try {
+    return try {
         val (year, month, day) = date.split("-").map { it.toInt() }
-        return LocalDate.of(year, month, day)
+        LocalDate.of(year, month, day)
     } catch (e: Exception) {
-        return null
+        null
     }
-
 }
 
 fun stringToTime(time: String): LocalTime? {
-    try {
+    return try {
         val (hour, minute) = time.split(":").map { it.toInt() }
-        return LocalTime.of(hour, minute, 0, 0)
+        LocalTime.of(hour, minute, 0, 0)
     } catch (e: Exception) {
-        return null
+        null
     }
 }
 
@@ -44,35 +48,29 @@ fun readPriority(): Priority {
 }
 
 fun readDate(): LocalDate {
-    println("Input the date (yyyy-mm-dd):")
-    var dateString = readln()
-    while (stringToDate(dateString) == null) {
+    do {
+        println("Input the date (yyyy-mm-dd):")
+        stringToDate(readln())?.let { return it }
         println("The input date is invalid")
-        dateString = readln()
-    }
-    return stringToDate(dateString)!!
+    } while (true)
 }
 
 fun readTime(): LocalTime {
-    println("Input the time (hh:mm):")
-
-    var timeString = readln()
-    while (stringToTime(timeString) == null) {
+    do {
+        println("Input the time (hh:mm):")
+        stringToTime(readln())?.let { return it }
         println("The input time is invalid")
-        timeString = readln()
-    }
-    return stringToTime(timeString)!!
+    } while (true)
 }
 
 fun readLines(): MutableList<String> {
     println("Input a new task (enter a blank line to end):")
-    var line = readln()
     val lines: MutableList<String> = mutableListOf()
-    while (line.isNotEmpty()) {
-        lines.add(line.trim())
-        line = readln()
-    }
-
+    do {
+        val line = readln()
+        if (line.isEmpty()) break
+        lines.add(line)
+    } while (true)
     return lines
 }
 
@@ -107,16 +105,15 @@ fun chooseTask(tasks: MutableList<Task>): Int? {
     if (tasks.isEmpty()) {
         println("No tasks have been input")
         return null
-    } else {
-        printTasksInfo(tasks)
-        println("Input the task number (1-${tasks.size}):")
-        var taskNumber = readln().toIntOrNull()
-        while (taskNumber == null || taskNumber !in 1..tasks.size) {
-            println("Invalid task number")
-            taskNumber = readln().toIntOrNull()
-        }
-        return taskNumber - 1
     }
+    printTasksInfo(tasks)
+    println("Input the task number (1-${tasks.size}):")
+    var taskNumber = readln().toIntOrNull()
+    while (taskNumber == null || taskNumber !in 1..tasks.size) {
+        println("Invalid task number")
+        taskNumber = readln().toIntOrNull()
+    }
+    return taskNumber - 1
 }
 
 fun editTask(tasks: MutableList<Task>) {
@@ -142,9 +139,9 @@ fun editTask(tasks: MutableList<Task>) {
 }
 
 fun deleteTask(tasks: MutableList<Task>) {
-    val taskNumber = chooseTask(tasks)
-    if (taskNumber != null) {
-        tasks.removeAt(taskNumber - 1)
+    val taskIndex = chooseTask(tasks)
+    taskIndex?.let {
+        tasks.removeAt(taskIndex - 1)
         println("The task is deleted")
     }
 }
@@ -156,14 +153,11 @@ fun main() {
 
     while (!end) {
         println("Input an action (add, print, edit, delete, end):")
-        val command = readln()
+        val command = readln().lowercase()
         when (command) {
             "add" -> addTask(tasks)
-
             "print" -> printTasksInfo(tasks)
-
             "edit" -> editTask(tasks)
-
             "delete" -> deleteTask(tasks)
 
             "end" -> {
