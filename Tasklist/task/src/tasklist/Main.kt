@@ -2,6 +2,7 @@ package tasklist
 
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 enum class Priority(val shortName: String) {
     CRITICAL("C"),
@@ -87,17 +88,56 @@ fun addTask(tasks: MutableList<Task>) {
 }
 
 fun printTasksInfo(tasks: MutableList<Task>) {
-    val indent = tasks.size.toString().length + 1
-    val indentPrefix = " ".repeat(indent)
+    val numberStringSize = 4
+    val dateStringSize = 12
+    val timeStringSize = 7
+    val taskStringSize = 44
+
+    val borderLine = "+${"-".repeat(numberStringSize)}+" +
+            "${"-".repeat(dateStringSize)}+" +
+            "${"-".repeat(timeStringSize)}+" +
+            "---+---+${"-".repeat(taskStringSize)}+"
+
+    println(borderLine)
+    println("| N  |    Date    | Time  | P | D |                   Task                     |")
+    println(borderLine)
 
     tasks.forEachIndexed { index, task ->
-        print((index + 1).toString().padEnd(indent, ' '))
-        println("${task.date} ${task.time} ${task.priority.shortName}")
-
-        task.lines.forEach { line ->
-            println("$indentPrefix$line")
+        val priorityChar = when(task.priority) {
+            Priority.CRITICAL -> "\u001B[101m \u001B[0m"
+            Priority.HIGH -> "\u001B[103m \u001B[0m"
+            Priority.NORMAL -> "\u001B[102m \u001B[0m"
+            Priority.LOW -> "\u001B[104m \u001B[0m"
         }
-        println()
+
+        val daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), task.date)
+
+        val dChar = when{
+            daysUntil < 0 ->  "\u001B[101m \u001B[0m"
+            daysUntil == 0L -> "\u001B[103m \u001B[0m"
+            else -> "\u001B[102m \u001B[0m"
+        }
+
+        val taskLines: MutableList<String> = mutableListOf()
+        for (line in task.lines) {
+            line.chunked(taskStringSize).forEach { l ->
+                taskLines.add(l.padEnd(taskStringSize, ' '))
+            }
+        }
+
+        val n = (index + 1).toString().padEnd(3, ' ')
+
+        println("| ${n}| ${task.date} | ${task.time} | $priorityChar | $dChar |${taskLines.first()}|")
+
+        taskLines.drop(0).forEach { line ->
+            println(
+                "|${" ".repeat(numberStringSize)}" +
+                        "|${" ".repeat(dateStringSize)}" +
+                        "|${" ".repeat(timeStringSize)}|   |   |$line|"
+            )
+        }
+
+        println(borderLine)
     }
 }
 
